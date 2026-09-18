@@ -80,10 +80,19 @@ tr.new td{background:color-mix(in srgb,var(--secant) 10%,transparent)}
 .hint{font-size:14px;color:var(--muted);margin:12px 0 0}
 kbd{font:500 13px var(--sans);border:1px solid var(--grid-strong);border-radius:3px;padding:1px 6px;color:var(--ink)}
 h2{font:500 16px var(--sans);margin:0 0 8px;color:var(--ink)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:0 0 10px;border-bottom:1px solid var(--rule)}
+.brand a:first-child{display:block;overflow:hidden;height:52px}
+.brand img{height:104px;width:auto;display:block;margin:-27px 0 0 -18px}
+.brand a{color:var(--muted);font-size:14px;text-decoration:none}
+.brand a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="brand">
+    <a href="https://stemonsters.com" aria-label="STEMonsters home"><img src="../../assets/image.png" alt="STEMonsters — Ask. Do. Learn. Repeat."></a>
+    <a href="https://stemonsters.com">stemonsters.com</a>
+  </div>
   <header>
     <h1>How fast, at this exact instant?</h1>
     <div class="pick">
