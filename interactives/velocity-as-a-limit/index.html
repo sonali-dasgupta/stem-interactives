@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velocity as a limit: from secant to tangent</title>
+<style>
+:root{
+  --paper:#F2F6F3; --grid:#D3E0D9; --grid-strong:#B5C8BE; --panel:#FFFFFF;
+  --ink:#15233B; --muted:#5B6B7A; --rule:#C9D5CF;
+  --curve:#1F4FA3; --secant:#D1491F; --tangent:#1E7F5C;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:"Avenir Next","Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#101A24; --grid:#1D2B38; --grid-strong:#2C3E4E; --panel:#16222E;
+    --ink:#E8EEF2; --muted:#9AAAB8; --rule:#2C3E4E;
+    --curve:#6FA0F2; --secant:#FF8A5C; --tangent:#5FD0A4;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.45;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px}
+.wrap{max-width:1360px;margin:0 auto;padding:20px 28px 28px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 24px;margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(24px,2.6vw,38px);margin:0;letter-spacing:-0.01em}
+.pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pick .lead{font-family:var(--serif);font-style:italic;font-size:clamp(20px,1.9vw,28px)}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;border-radius:0;border-left:1.5px solid var(--ink);font-family:var(--serif);font-style:italic;font-size:clamp(18px,1.7vw,24px);padding:6px 18px}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--curve);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:20px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+.stage,.side{background:var(--panel);border:1px solid var(--rule);border-radius:6px}
+.stage{padding:12px 14px 14px}
+.side{padding:18px 20px}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--sans);fill:var(--muted);font-variant-numeric:tabular-nums}
+svg text.ink{fill:var(--ink)}
+svg text.fx{font-family:var(--serif);font-style:italic;fill:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:15px;color:var(--muted);margin:6px 4px 12px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:26px;height:0;border-top:3px solid}
+.controls{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);gap:10px 12px;align-items:center;border-top:1px solid var(--rule);padding-top:12px}
+@media (max-width:700px){.controls{grid-template-columns:1fr 1fr}}
+button{font:500 16px var(--sans);color:var(--ink);background:transparent;border:1.5px solid var(--ink);border-radius:4px;padding:9px 16px;cursor:pointer;white-space:nowrap}
+button:hover{background:var(--paper)}
+button:active{transform:translateY(1px)}
+button.main{background:var(--ink);color:var(--panel)}
+button.main:hover{opacity:.88;background:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--secant);outline-offset:2px}
+.slider{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--muted);min-width:0}
+.slider input{flex:1;min-width:0;accent-color:var(--secant)}
+.slider.t input{accent-color:var(--curve)}
+.slider output{min-width:64px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:500}
+.trow{grid-column:1/-1}
+.eq{font-family:var(--serif);font-size:clamp(19px,1.6vw,25px);font-variant-numeric:tabular-nums lining-nums}
+.eq .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 4px}
+.eq .frac span:first-child{border-bottom:1.5px solid currentColor;padding:0 6px 2px}
+.eq .frac span:last-child{padding:2px 6px 0}
+.eq .line{margin:0 0 12px;display:flex;align-items:center;flex-wrap:wrap}
+.vals{margin:0 0 14px;padding:10px 12px;background:var(--paper);border-radius:4px;font-size:clamp(17px,1.35vw,21px)}
+.vals div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.vals div + div{margin-top:6px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none;align-self:center}
+.vals b{font-weight:500}
+.big{font-size:clamp(34px,3.4vw,52px);font-weight:500;color:var(--secant);line-height:1.1}
+.lim .big{color:var(--tangent)}
+.cap{font-size:15px;color:var(--muted);margin:0 0 2px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:4px 0 18px;padding:14px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:16px}
+th{font-weight:500;color:var(--muted);text-align:right;padding:4px 6px;border-bottom:1.5px solid var(--ink);font-size:14px}
+td{text-align:right;padding:5px 6px;border-bottom:1px solid var(--rule)}
+td:last-child{color:var(--secant);font-weight:500}
+tr.new td{background:color-mix(in srgb,var(--secant) 10%,transparent)}
+.hint{font-size:14px;color:var(--muted);margin:12px 0 0}
+kbd{font:500 13px var(--sans);border:1px solid var(--grid-strong);border-radius:3px;padding:1px 6px;color:var(--ink)}
+h2{font:500 16px var(--sans);margin:0 0 8px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>How fast, at this exact instant?</h1>
+    <div class="pick">
+      <span class="lead">Position is a function of time: x(t) =</span>
+      <span class="seg" role="group" aria-label="Choose the position function">
+        <button data-f="sq" aria-pressed="true">t²</button>
+        <button data-f="sq10" aria-pressed="false">t² + 10</button>
+        <button data-f="cube" aria-pressed="false">t³</button>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="Animation">
+      <svg id="track" viewBox="0 0 800 84" role="img" aria-label="Straight track showing where the object is at time t and at time t plus delta t">
+        <line x1="60" y1="48" x2="780" y2="48" stroke="var(--grid-strong)" stroke-width="2"/>
+        <g id="tticks"></g>
+        <line id="tr-span" y1="48" y2="48" stroke="var(--secant)" stroke-width="5" stroke-linecap="round"/>
+        <circle id="tr-p" cy="48" r="9" fill="var(--curve)" stroke="var(--panel)" stroke-width="3"/>
+        <circle id="tr-q" cy="48" r="9" fill="var(--secant)" stroke="var(--panel)" stroke-width="3"/>
+        <text id="tr-pl" y="24" text-anchor="middle" font-size="15" class="ink">x(t)</text>
+        <text id="tr-ql" y="24" text-anchor="middle" font-size="15" class="ink">x(t + Δt)</text>
+      </svg>
+
+      <svg id="graph" viewBox="0 0 800 480" role="img" aria-label="Position against time. A secant line through two points on the curve rotates onto the tangent as delta t shrinks.">
+        <defs><clipPath id="clip"><rect x="60" y="16" width="720" height="424"/></clipPath></defs>
+        <g id="ggrid"></g>
+        <line x1="60" y1="440" x2="780" y2="440" stroke="var(--ink)" stroke-width="1.5"/>
+        <line x1="60" y1="16" x2="60" y2="440" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="690" y="476" text-anchor="middle" font-size="15">time t (s)</text>
+        <text x="70" y="30" font-size="15">position x (m)</text>
+        <g clip-path="url(#clip)">
+          <line id="gd-ph" stroke="var(--curve)" stroke-width="1.5" stroke-dasharray="2 5" opacity=".7"/>
+          <line id="gd-pv" stroke="var(--curve)" stroke-width="1.5" stroke-dasharray="2 5" opacity=".7"/>
+          <line id="gd-qh" stroke="var(--secant)" stroke-width="1.5" stroke-dasharray="2 5" opacity=".7"/>
+          <line id="gd-qv" stroke="var(--secant)" stroke-width="1.5" stroke-dasharray="2 5" opacity=".7"/>
+          <path id="curve" fill="none" stroke="var(--curve)" stroke-width="3.5" stroke-linecap="round"/>
+          <line id="tangent" stroke="var(--tangent)" stroke-width="3" stroke-dasharray="9 7"/>
+          <line id="secant" stroke="var(--secant)" stroke-width="3"/>
+          <line id="leg-h" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 4"/>
+          <line id="leg-v" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 4"/>
+        </g>
+        <circle id="ax-px" cx="60" r="5" fill="var(--curve)"/>
+        <circle id="ax-qx" cx="60" r="5" fill="var(--secant)"/>
+        <circle id="ax-pt" cy="440" r="5" fill="var(--curve)"/>
+        <circle id="ax-qt" cy="440" r="5" fill="var(--secant)"/>
+
+        <g id="readout">
+          <circle cx="92" cy="58" r="6" fill="var(--curve)"/>
+          <text id="rd-p" x="106" y="64" font-size="19" class="fx"></text>
+          <circle cx="92" cy="88" r="6" fill="var(--secant)"/>
+          <text id="rd-q" x="106" y="94" font-size="19" class="fx"></text>
+        </g>
+
+        <text id="lab-dt" text-anchor="middle" font-size="18" class="ink">Δt</text>
+        <text id="lab-dx" font-size="18" class="ink">Δx</text>
+        <text id="tag-p" text-anchor="end" font-size="17" class="fx">x(t)</text>
+        <text id="tag-q" text-anchor="end" font-size="17" class="fx">x(t + Δt)</text>
+        <circle id="pt-q" r="8" fill="var(--secant)" stroke="var(--panel)" stroke-width="3"/>
+        <circle id="pt-p" r="8" fill="var(--curve)" stroke="var(--panel)" stroke-width="3"/>
+      </svg>
+
+      <div class="legend">
+        <span><i style="border-color:var(--curve)"></i>the motion, x(t) = <span id="lg-f">t²</span></span>
+        <span><i style="border-color:var(--secant)"></i>secant: slope is average velocity</span>
+        <span><i style="border-color:var(--tangent);border-top-style:dashed"></i>tangent: slope is instantaneous velocity</span>
+      </div>
+
+      <div class="controls">
+        <button class="main" id="play">Play</button>
+        <button id="halve">Halve Δt</button>
+        <button id="reset">Start over</button>
+        <label class="slider">Δt
+          <input type="range" id="sl" min="0" max="100" step="0.5" value="0" aria-label="Size of the time interval, delta t">
+          <output id="sl-out">2.0000 s</output>
+        </label>
+        <label class="slider t trow">Choose the instant t
+          <input type="range" id="t0" min="0.5" max="2" step="0.1" value="1" aria-label="The instant at which velocity is wanted">
+          <output id="t0-out">1.0 s</output>
+        </label>
+      </div>
+    </section>
+
+    <aside class="side" aria-label="Numbers">
+      <div class="eq">
+        <div class="vals">
+          <div><span class="dot" style="background:var(--curve)"></span><span>x(t) = x(<span id="v-t0"></span>) = <span id="v-e0"></span> = <b id="v-x0"></b> m</span></div>
+          <div><span class="dot" style="background:var(--secant)"></span><span>x(t + Δt) = x(<span id="v-t1"></span>) = <span id="v-e1"></span> = <b id="v-x1"></b> m</span></div>
+        </div>
+        <div class="line">
+          <span>v<sub>avg</sub>&nbsp;=</span>
+          <span class="frac"><span>x(t + Δt) − x(t)</span><span>Δt</span></span> =
+          <span class="frac"><span><span id="e-x1"></span> − <span id="e-x0"></span></span><span id="e-dt"></span></span>
+        </div>
+      </div>
+
+      <div class="pair">
+        <div>
+          <p class="cap">Average velocity over Δt</p>
+          <div class="big" id="o-v"></div>
+          <p class="cap">m/s</p>
+        </div>
+        <div class="lim">
+          <p class="cap">Limit as Δt → 0, dx/dt at t = <span id="c-t0"></span> s</p>
+          <div class="big" id="o-lim"></div>
+          <p class="cap">m/s</p>
+        </div>
+      </div>
+
+      <h2>Record of each halving</h2>
+      <table aria-live="polite">
+        <thead><tr><th>Δt (s)</th><th>x(t + Δt) (m)</th><th>Δx (m)</th><th>Δx/Δt (m/s)</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="hint">Ask the class to predict the next row before pressing Halve Δt. Keys: <kbd>Space</kbd> play or pause, <kbd>→</kbd> halve, <kbd>R</kbd> start over, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> change x(t).</p>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+  var FUNCS={
+    sq:  {label:'t²',      f:function(t){return t*t},     df:function(t){return 2*t},   xm:16, step:2, expr:function(a){return a+'²'}},
+    sq10:{label:'t² + 10', f:function(t){return t*t+10},  df:function(t){return 2*t},   xm:28, step:4, expr:function(a){return a+'² + 10'}},
+    cube:{label:'t³',      f:function(t){return t*t*t},   df:function(t){return 3*t*t}, xm:64, step:8, expr:function(a){return a+'³'}}
+  };
+  var F=FUNCS.sq, XM=16, STEP=2;
+  function fit(){
+    if(F!==FUNCS.cube){XM=F.xm;STEP=F.step;return}
+    var need=F.f(t0+DT0), opts=[16,32,48,64], i;
+    for(i=0;i<opts.length;i++){if(opts[i]>=need-1e-9){XM=opts[i];break}}
+    STEP=XM/8;
+  }
+  var TM=4, L=60, R=780, TP=16, B=440, DT0=2, DTMIN=0.001, DUR=11000;
+  var t0=1, dt=DT0, playing=false, raf=null, startTs=0, fromS=0;
+  var NS='http://www.w3.org/2000/svg';
+  function $(id){return document.getElementById(id)}
+  function el(n,a,p,txt){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e}
+  function sx(t){return L+t/TM*(R-L)}
+  function sy(x){return B-x/XM*(B-TP)}
+  function trx(x){return 60+x/XM*720}
+  function sOf(d){return 100*Math.log(d/DT0)/Math.log(DTMIN/DT0)}
+  function dOf(s){return DT0*Math.pow(DTMIN/DT0,s/100)}
+  function set(id,a){var e=$(id);for(var k in a)e.setAttribute(k,a[k])}
+  function clear(n){while(n.firstChild)n.removeChild(n.firstChild)}
+
+  function buildAxes(){
+    var g=$('ggrid'), tk=$('tticks'), i;
+    fit(); clear(g); clear(tk);
+    for(i=0;i<=TM;i++){
+      if(i>0) el('line',{x1:sx(i),y1:TP,x2:sx(i),y2:B,stroke:'var(--grid-strong)','stroke-width':1},g);
+      el('text',{x:sx(i),y:B+22,'text-anchor':'middle','font-size':15},g,i);
+    }
+    for(i=STEP;i<=XM;i+=STEP){
+      el('line',{x1:L,y1:sy(i),x2:R,y2:sy(i),stroke:'var(--grid-strong)','stroke-width':1},g);
+      el('text',{x:L-10,y:sy(i)+5,'text-anchor':'end','font-size':15},g,i);
+    }
+    for(i=0;i<=XM;i+=STEP){
+      el('line',{x1:trx(i),y1:42,x2:trx(i),y2:54,stroke:'var(--grid-strong)','stroke-width':2},tk);
+      el('text',{x:trx(i),y:76,'text-anchor':'middle','font-size':14},tk,i+' m');
+    }
+    var d='';
+    for(i=0;i<=240;i++){var tt=i/240*TM; d+=(i?'L':'M')+sx(tt).toFixed(1)+' '+sy(F.f(tt)).toFixed(1)}
+    $('curve').setAttribute('d',d);
+    $('lg-f').textContent=F.label;
+  }
+
+  function setLine(id,slope){
+    var x0=F.f(t0), l=$(id);
+    l.setAttribute('x1',sx(0)); l.setAttribute('y1',sy(x0-slope*t0));
+    l.setAttribute('x2',sx(TM)); l.setAttribute('y2',sy(x0+slope*(TM-t0)));
+  }
+
+  function draw(){
+    var x0=F.f(t0), t1=t0+dt, x1=F.f(t1), dx=x1-x0, v=dx/dt;
+    var px=sx(t0), py=sy(x0), qx=sx(t1), qy=sy(x1);
+    setLine('tangent',F.df(t0)); setLine('secant',v);
+    set('pt-p',{cx:px,cy:py}); set('pt-q',{cx:qx,cy:qy});
+    set('leg-h',{x1:px,y1:py,x2:qx,y2:py});
+    set('leg-v',{x1:qx,y1:py,x2:qx,y2:qy});
+    set('gd-ph',{x1:L,y1:py,x2:px,y2:py}); set('gd-pv',{x1:px,y1:py,x2:px,y2:B});
+    set('gd-qh',{x1:L,y1:qy,x2:qx,y2:qy}); set('gd-qv',{x1:qx,y1:qy,x2:qx,y2:B});
+    set('ax-px',{cy:py}); set('ax-qx',{cy:qy}); set('ax-pt',{cx:px}); set('ax-qt',{cx:qx});
+    var show=dt>0.3?1:0;
+    set('lab-dt',{x:(px+qx)/2,y:Math.min(py+24,B-6)}); $('lab-dt').style.opacity=show;
+    set('lab-dx',{x:Math.min(qx+10,R-30),y:(py+qy)/2+6}); $('lab-dx').style.opacity=show;
+    set('tag-p',{x:px-12,y:py-12});
+    set('tag-q',{x:qx-12,y:Math.max(qy-12,34)}); $('tag-q').style.opacity=show;
+
+    var s0=t0.toFixed(1), s1=t1.toFixed(4);
+    $('rd-p').textContent='x(t) = x('+s0+') = '+x0.toFixed(4)+' m';
+    $('rd-q').textContent='x(t + Δt) = x('+s1+') = '+x1.toFixed(4)+' m';
+
+    set('tr-p',{cx:trx(x0)}); set('tr-q',{cx:trx(x1)}); set('tr-span',{x1:trx(x0),x2:trx(x1)});
+    var plx=Math.max(trx(x0),100), qlx=Math.min(Math.max(trx(x1),plx+150),715);
+    if(qlx-plx<150) plx=qlx-150;
+    set('tr-pl',{x:plx}); set('tr-ql',{x:qlx});
+    $('tr-pl').textContent='x(t) = '+x0.toFixed(2)+' m';
+    $('tr-ql').textContent='x(t + Δt) = '+x1.toFixed(2)+' m';
+
+    $('v-t0').textContent=s0; $('v-e0').textContent=F.expr(s0); $('v-x0').textContent=x0.toFixed(4);
+    $('v-t1').textContent=s1; $('v-e1').textContent=F.expr(s1); $('v-x1').textContent=x1.toFixed(4);
+    $('e-x1').textContent=x1.toFixed(4); $('e-x0').textContent=x0.toFixed(4); $('e-dt').textContent=dt.toFixed(4);
+    $('o-v').textContent=v.toFixed(4); $('o-lim').textContent=F.df(t0).toFixed(4);
+    $('c-t0').textContent=s0;
+    $('sl-out').textContent=dt.toFixed(4)+' s';
+    $('t0-out').textContent=s0+' s';
+  }
+
+  function addRow(){
+    var body=$('rows'), x0=F.f(t0), x1=F.f(t0+dt), dx=x1-x0;
+    Array.prototype.forEach.call(body.querySelectorAll('tr.new'),function(r){r.className=''});
+    var tr=document.createElement('tr'); tr.className='new';
+    [dt.toFixed(4),x1.toFixed(4),dx.toFixed(4),(dx/dt).toFixed(4)].forEach(function(s){var td=document.createElement('td');td.textContent=s;tr.appendChild(td)});
+    body.appendChild(tr);
+    while(body.children.length>11) body.removeChild(body.firstChild);
+  }
+
+  function stop(){playing=false; if(raf)cancelAnimationFrame(raf); raf=null; label()}
+  function label(){$('play').textContent=playing?'Pause':(dt<=DTMIN*1.001?'Play again':'Play')}
+  function frame(ts){
+    if(!startTs) startTs=ts;
+    var s=fromS+(ts-startTs)/DUR*100;
+    if(s>=100){s=100; playing=false}
+    dt=dOf(s); $('sl').value=s; draw();
+    if(playing) raf=requestAnimationFrame(frame); else label();
+  }
+  function play(){
+    if(playing){stop();return}
+    if(dt<=DTMIN*1.001){dt=DT0}
+    fromS=sOf(dt); startTs=0; playing=true; label(); raf=requestAnimationFrame(frame);
+  }
+  function halve(){
+    stop();
+    if(dt<=DTMIN*1.001) return;
+    dt=Math.max(dt/2,DTMIN); $('sl').value=sOf(dt); draw(); addRow(); label();
+  }
+  function reset(){
+    stop(); dt=DT0; $('sl').value=0; clear($('rows')); draw(); addRow(); label();
+  }
+  function choose(key){
+    if(!FUNCS[key]) return;
+    F=FUNCS[key];
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
+      b.setAttribute('aria-pressed',b.getAttribute('data-f')===key?'true':'false');
+    });
+    buildAxes(); reset();
+  }
+
+  $('play').addEventListener('click',play);
+  $('halve').addEventListener('click',halve);
+  $('reset').addEventListener('click',reset);
+  $('sl').addEventListener('input',function(){stop(); dt=dOf(Number(this.value)); draw(); label()});
+  $('t0').addEventListener('input',function(){t0=Math.round(Number(this.value)*10)/10; var old=XM; fit(); if(XM!==old) buildAxes(); reset()});
+  Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
+    b.addEventListener('click',function(){choose(b.getAttribute('data-f'))});
+  });
+  document.addEventListener('keydown',function(e){
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(e.key===' '&&tag!=='button'){e.preventDefault();play()}
+    else if(e.key==='ArrowRight'&&tag!=='input'){e.preventDefault();halve()}
+    else if(e.key==='r'||e.key==='R'){reset()}
+    else if(e.key==='1'){choose('sq')}
+    else if(e.key==='2'){choose('sq10')}
+    else if(e.key==='3'){choose('cube')}
+  });
+  choose('sq');
+})();
+</script>
+</body>
+</html>
