@@ -1,0 +1,17 @@
+{
+  "site": "https://sonali-dasgupta.github.io/stem-interactives/",
+  "note": "Private inventory. Nothing here is published as a list; each interactive is reached only by its direct link.",
+  "interactives": [
+    {
+      "slug": "velocity-as-a-limit",
+      "title": "How fast, at this exact instant? — velocity as a limit",
+      "subject": "Physics / Calculus",
+      "grades": "11-12",
+      "topics": ["kinematics", "average vs instantaneous velocity", "secant and tangent", "limits", "derivative"],
+      "summary": "Shrink Δt and watch the secant through x(t) and x(t+Δt) rotate onto the tangent. Table records each halving so students can predict the limit before it appears.",
+      "visibility": "unlisted",
+      "url": "https://sonali-dasgupta.github.io/stem-interactives/interactives/velocity-as-a-limit/",
+      "added": "2026-09-19"
+    }
+  ]
+}
