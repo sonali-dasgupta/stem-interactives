@@ -30,4 +30,4 @@ Live URL pattern: `https://sonali-dasgupta.github.io/stem-interactives/interacti
 
 ## Licence
 
-© STEMonsters Education Pvt. Ltd. Shared with partner schools for classroom use.
+© STEMonsters Education Pvt. Ltd. Shared with partner schools and students for classroom use.
