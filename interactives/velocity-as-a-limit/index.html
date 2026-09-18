@@ -85,6 +85,16 @@ h2{font:500 16px var(--sans);margin:0 0 8px;color:var(--ink)}
 .brand img{height:104px;width:auto;display:block;margin:-27px 0 0 -18px}
 .brand a{color:var(--muted);font-size:14px;text-decoration:none}
 .brand a:hover{text-decoration:underline}
+.howto{grid-column:1/-1;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:4px 20px}
+.howto summary{cursor:pointer;font:500 16px var(--sans);padding:12px 0;list-style:none;display:flex;align-items:center;gap:10px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";color:var(--secant);font-size:18px;transition:transform .15s}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 28px;padding:0 0 16px}
+.howto h3{font:500 14px var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0 6px}
+.howto ol,.howto ul{margin:0;padding-left:20px;font-size:15px}
+.howto li{margin:0 0 6px}
+.howto li b{font-weight:500}
 </style>
 </head>
 <body>
@@ -209,6 +219,37 @@ h2{font:500 16px var(--sans);margin:0 0 8px;color:var(--ink)}
       </table>
       <p class="hint">Ask the class to predict the next row before pressing Halve Δt. Keys: <kbd>Space</kbd> play or pause, <kbd>→</kbd> halve, <kbd>R</kbd> start over, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> change x(t).</p>
     </aside>
+
+    <details class="howto" open>
+      <summary>How to use this interactive</summary>
+      <div class="cols">
+        <div>
+          <h3>The idea</h3>
+          <ul>
+            <li>The blue curve shows where an object is at each moment. Its steepness is how fast the object is moving.</li>
+            <li>The <b style="color:var(--secant)">orange secant</b> joins two moments, t and t + Δt. Its slope is the <b>average velocity</b> over that gap.</li>
+            <li>As you shrink Δt, the secant swings onto the <b style="color:var(--tangent)">green tangent</b>. Its slope is the <b>instantaneous velocity</b> at t — the limit of Δx/Δt as Δt → 0.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Try this</h3>
+          <ol>
+            <li>Press <b>Play</b> and watch the orange point slide toward the blue one. Watch the "Average velocity" number settle.</li>
+            <li>Press <b>Start over</b>, then use <b>Halve Δt</b> one step at a time. Before each press, predict the next value of Δx/Δt.</li>
+            <li>Move <b>Choose the instant t</b>. Does the limit change? Compare it with 2t (for x = t²) or 3t² (for x = t³).</li>
+            <li>Switch to <b>t² + 10</b>. The curve moves up but the velocity stays the same. Why?</li>
+          </ol>
+        </div>
+        <div>
+          <h3>For teachers</h3>
+          <ul>
+            <li>Best projected with the table visible: each halving adds a row, so the class can see Δx/Δt closing in on the limit.</li>
+            <li>Ask: "Why does Δx/Δt never quite equal 2 — and why do we still say the velocity <i>is</i> 2?"</li>
+            <li>Keys: <kbd>Space</kbd> play/pause, <kbd>→</kbd> halve, <kbd>R</kbd> start over, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> change x(t).</li>
+          </ul>
+        </div>
+      </div>
+    </details>
   </main>
 </div>
 
